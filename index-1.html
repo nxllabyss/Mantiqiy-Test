@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logic Test</title>
+<style>
+/* ============================================================
+   FONTS & ROOT VARIABLES
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@700;800&display=swap');
+
+:root {
+  --bg:        #0a0a0e;
+  --surface:   #111118;
+  --card:      #16161f;
+  --border:    #2a2a3a;
+  --accent:    #4fffb0;
+  --accent2:   #00c8ff;
+  --danger:    #ff4e6a;
+  --warn:      #ffb84e;
+  --text:      #e8e8f0;
+  --muted:     #6b6b88;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-body: 'Barlow', sans-serif;
+  --font-disp: 'Barlow Condensed', sans-serif;
+  --radius:    4px;
+  --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="light"] {
+  --bg:      #f0f0f5;
+  --surface: #e4e4ee;
+  --card:    #ffffff;
+  --border:  #c8c8dd;
+  --text:    #12121e;
+  --muted:   #6b6b88;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* Noise overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+/* Grid lines background */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(79,255,176,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,255,176,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   LAYOUT WRAPPER
+   ============================================================ */
+#app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 680px;
+  padding: 1.5rem;
+}
+
+/* ============================================================
+   THEME TOGGLE
+   ============================================================ */
+#theme-btn {
+  position: fixed;
+  top: 1.25rem; right: 1.25rem;
+  z-index: 100;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+  box-shadow: 0 0 20px rgba(79,255,176,0.08);
+}
+#theme-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(79,255,176,0.25);
+  transform: scale(1.08);
+}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+.screen {
+  display: none;
+  animation: fadeSlideIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.screen.active { display: block; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   CARD
+   ============================================================ */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2), transparent);
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+.label-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+h1.title {
+  font-family: var(--font-disp);
+  font-size: clamp(2.8rem, 8vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+h1.title span { color: var(--accent); }
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.section-title {
+  font-family: var(--font-disp);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.4rem;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2rem;
+  font-family: var(--font-disp);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.08);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.btn:hover::after { opacity: 1; }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #0a0a0e;
+}
+.btn-primary:hover {
+  box-shadow: 0 0 30px rgba(79,255,176,0.4);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ============================================================
+   OPTION GRID (language / difficulty / length / timer)
+   ============================================================ */
+.option-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.option-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.option-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+
+.opt-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 1rem 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font-disp);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.opt-btn .opt-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.opt-btn .opt-sub {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 300;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+.opt-btn:hover {
+  border-color: var(--accent);
+  background: rgba(79,255,176,0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 24px rgba(79,255,176,0.12);
+}
+
+.opt-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(79,255,176,0.06), transparent);
+  transition: left 0.5s;
+}
+.opt-btn:hover::before { left: 160%; }
+
+/* ============================================================
+   QUIZ SCREEN
+   ============================================================ */
+.quiz-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  gap: 1rem;
+}
+
+.q-counter {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.q-counter span { color: var(--accent); font-size: 1rem; }
+
+/* Progress bar */
+.progress-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  height: 4px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 20px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 2px;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* Timer */
+.timer-ring-wrap {
+  position: relative;
+  width: 52px; height: 52px;
+  flex-shrink: 0;
+}
+
+.timer-ring-wrap svg {
+  transform: rotate(-90deg);
+  width: 52px; height: 52px;
+}
+
+.timer-track { fill: none; stroke: var(--surface); stroke-width: 3; }
+.timer-arc   { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+
+.timer-num {
+  position: absolute;
+  inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+  transition: color 0.3s;
+}
+
+/* Question */
+.question-box {
+  margin-bottom: 1.5rem;
+}
+
+.q-number {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.question-text {
+  font-family: var(--font-disp);
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+/* Answer options */
+.answers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.ans-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 400;
+  line-height: 1.4;
+  transition: all 0.2s;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.ans-letter {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--accent);
+  background: rgba(79,255,176,0.1);
+  border: 1px solid rgba(79,255,176,0.2);
+  border-radius: 2px;
+  padding: 0.1rem 0.35rem;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+.ans-btn:not(:disabled):hover {
+  border-color: var(--accent2);
+  background: rgba(0,200,255,0.06);
+  transform: translateX(2px);
+}
+
+.ans-btn.correct {
+  border-color: var(--accent) !important;
+  background: rgba(79,255,176,0.12) !important;
+  color: var(--accent) !important;
+}
+
+.ans-btn.wrong {
+  border-color: var(--danger) !important;
+  background: rgba(255,78,106,0.1) !important;
+  color: var(--danger) !important;
+}
+
+.ans-btn.correct .ans-letter { color: var(--accent); border-color: var(--accent); }
+.ans-btn.wrong .ans-letter   { color: var(--danger); border-color: var(--danger); }
+
+.ans-btn:disabled { cursor: not-allowed; }
+
+/* Flash feedback overlay */
+.feedback-flash {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.feedback-flash.correct-flash { background: rgba(79,255,176,0.08); }
+.feedback-flash.wrong-flash   { background: rgba(255,78,106,0.08); }
+.feedback-flash.show { opacity: 1; }
+
+/* ============================================================
+   RESULT SCREEN
+   ============================================================ */
+.score-display {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.score-pct {
+  font-family: var(--font-disp);
+  font-size: clamp(4rem, 14vw, 7rem);
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.score-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+}
+
+.score-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.stat-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 0.5rem;
+  text-align: center;
+}
+
+.stat-val {
+  font-family: var(--font-disp);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 0.2rem;
+}
+
+.verdict {
+  text-align: center;
+  font-family: var(--font-disp);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+}
+
+.verdict.excellent { background: rgba(79,255,176,0.1); color: var(--accent); border: 1px solid rgba(79,255,176,0.3); }
+.verdict.good      { background: rgba(0,200,255,0.1);  color: var(--accent2); border: 1px solid rgba(0,200,255,0.3); }
+.verdict.average   { background: rgba(255,184,78,0.1); color: var(--warn);   border: 1px solid rgba(255,184,78,0.3); }
+.verdict.poor      { background: rgba(255,78,106,0.1); color: var(--danger); border: 1px solid rgba(255,78,106,0.3); }
+
+.result-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.result-actions .btn { flex: 1; min-width: 140px; }
+
+/* ============================================================
+   DECORATIVE ELEMENTS
+   ============================================================ */
+.corner-deco {
+  position: absolute;
+  width: 20px; height: 20px;
+  opacity: 0.3;
+}
+.corner-deco.tl { top: 8px; left: 8px; border-top: 1px solid var(--accent); border-left: 1px solid var(--accent); }
+.corner-deco.br { bottom: 8px; right: 8px; border-bottom: 1px solid var(--accent); border-right: 1px solid var(--accent); }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+/* ============================================================
+   WELCOME SCREEN SPECIFIC
+   ============================================================ */
+.welcome-hero {
+  text-align: center;
+  padding: 1rem 0 0.5rem;
+}
+
+.logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px; height: 64px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 1.25rem;
+  font-size: 1.8rem;
+  position: relative;
+  background: var(--surface);
+}
+
+.logo-mark::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(79,255,176,0.2);
+  border-radius: 2px;
+}
+
+.last-score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.3rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 1rem;
+}
+
+.last-score-badge .val { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 480px) {
+  .card { padding: 1.75rem 1.25rem 1.5rem; }
+  .answers-grid { grid-template-columns: 1fr; }
+  .score-stats { grid-template-columns: repeat(3, 1fr); }
+  .option-grid.cols-3 { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   TIMER WARN STATES
+   ============================================================ */
+.timer-warn .timer-arc   { stroke: var(--warn); }
+.timer-warn .timer-num   { color: var(--warn); }
+.timer-danger .timer-arc { stroke: var(--danger); }
+.timer-danger .timer-num { color: var(--danger); animation: pulse 0.5s ease-in-out infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* Slide-in animation for answer area */
+.question-box, .answers-grid {
+  animation: fadeSlideIn 0.3s cubic-bezier(0.4,0,0.2,1) both;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     THEME TOGGLE
+     ============================================================ -->
+<button id="theme-btn" onclick="toggleTheme()" title="Toggle theme">☽</button>
+
+<!-- Feedback flash overlay -->
+<div class="feedback-flash" id="feedback-flash"></div>
+
+<!-- ============================================================
+     APP WRAPPER
+     ============================================================ -->
+<div id="app">
+
+  <!-- ── SCREEN 1: WELCOME ─────────────────────────────── -->
+  <div class="screen active" id="screen-welcome">
+    <div class="card">
+      <div class="corner-deco tl"></div>
+      <div class="corner-deco br"></div>
+      <div class="welcome-hero">
+        <div class="logo-mark">⬡</div>
+        <span class="label-tag" data-i18n="welcome_tag">System Initialized</span>
+        <h1 class="title" data-i18n="welcome_title">LOGIC<span>TEST</span></h1>
+        <p class="subtitle" data-i18n="welcome_sub">Measure your reasoning. Challenge your mind.</p>
+        <button class="btn btn-primary" onclick="goTo('screen-lang')" data-i18n="start_btn" style="min-width:180px; font-size:1.1rem; padding: 0.9rem 2.5rem;">
+          START
+        </button>
+        <div id="last-score-wrap" style="display:none;">
+          <div class="last-score-badge">
+            <span data-i18n="last_score">Last Score</span>:
+            <span class="val" id="last-score-val">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 2: LANGUAGE ────────────────────────────── -->
+  <div class="screen" id="screen-lang">
+    <div class="card">
+      <div class="corner-deco tl"></div>
+      <div class="corner-deco br"></div>
+      <span class="label-tag">01 / 04</span>
+      <div class="section-title" data-i18n="lang_title">Select Language</div>
+      <p class="subtitle" data-i18n="lang_sub">Choose your preferred language</p>
+      <div class="option-grid cols-3">
+        <button class="opt-btn" onclick="setLang('en')">
+          <span class="opt-icon">🇬🇧</span>
+          <span>English</span>
+          <span class="opt-sub">English</span>
+        </button>
+        <button class="opt-btn" onclick="setLang('ru')">
+          <span class="opt-icon">🇷🇺</span>
+          <span>Русский</span>
+          <span class="opt-sub">Russian</span>
+        </button>
+        <button class="opt-btn" onclick="setLang('uz')">
+          <span class="opt-icon">🇺🇿</span>
+          <span>O'zbekcha</span>
+          <span class="opt-sub">Uzbek</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 3: DIFFICULTY ──────────────────────────── -->
+  <div class="screen" id="screen-difficulty">
+    <div class="card">
+      <div class="corner-deco tl"></div>
+      <div class="corner-deco br"></div>
+      <span class="label-tag">02 / 04</span>
+      <div class="section-title" data-i18n="diff_title">Difficulty</div>
+      <p class="subtitle" data-i18n="diff_sub">30 questions per level, randomized</p>
+      <div class="option-grid cols-3">
+        <button class="opt-btn" onclick="setDifficulty('easy')">
+          <span class="opt-icon">🟢</span>
+          <span data-i18n="easy">Easy</span>
+          <span class="opt-sub" data-i18n="easy_sub">Basic Logic</span>
+        </button>
+        <button class="opt-btn" onclick="setDifficulty('medium')">
+          <span class="opt-icon">🟡</span>
+          <span data-i18n="medium">Medium</span>
+          <span class="opt-sub" data-i18n="medium_sub">Moderate</span>
+        </button>
+        <button class="opt-btn" onclick="setDifficulty('hard')">
+          <span class="opt-icon">🔴</span>
+          <span data-i18n="hard">Hard</span>
+          <span class="opt-sub" data-i18n="hard_sub">Advanced</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 4: TEST LENGTH ─────────────────────────── -->
+  <div class="screen" id="screen-length">
+    <div class="card">
+      <div class="corner-deco tl"></div>
+      <div class="corner-deco br"></div>
+      <span class="label-tag">03 / 04</span>
+      <div class="section-title" data-i18n="len_title">Test Length</div>
+      <p class="subtitle" data-i18n="len_sub">How many questions?</p>
+      <div class="option-grid cols-3">
+        <button class="opt-btn" onclick="setLength(10)">
+          <span class="opt-icon">📝</span>
+          <span>10</span>
+          <span class="opt-sub" data-i18n="questions">Questions</span>
+        </button>
+        <button class="opt-btn" onclick="setLength(20)">
+          <span class="opt-icon">📋</span>
+          <span>20</span>
+          <span class="opt-sub" data-i18n="questions">Questions</span>
+        </button>
+        <button class="opt-btn" onclick="setLength(30)">
+          <span class="opt-icon">📚</span>
+          <span>30</span>
+          <span class="opt-sub" data-i18n="questions">Questions</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 5: TIMER ───────────────────────────────── -->
+  <div class="screen" id="screen-timer">
+    <div class="card">
+      <div class="corner-deco tl"></div>
+      <div class="corner-deco br"></div>
+      <span class="label-tag">04 / 04</span>
+      <div class="section-title" data-i18n="timer_title">Time Per Question</div>
+      <p class="subtitle" data-i18n="timer_sub">Auto-advance when time expires</p>
+      <div class="option-grid cols-3">
+        <button class="opt-btn" onclick="setTimer(15)">
+          <span class="opt-icon">⚡</span>
+          <span>15s</span>
+          <span class="opt-sub" data-i18n="fast">Fast</span>
+        </button>
+        <button class="opt-btn" onclick="setTimer(30)">
+          <span class="opt-icon">⏱</span>
+          <span>30s</span>
+          <span class="opt-sub" data-i18n="balanced">Balanced</span>
+        </button>
+        <button class="opt-btn" onclick="setTimer(45)">
+          <span class="opt-icon">🐢</span>
+          <span>45s</span>
+          <span class="opt-sub" data-i18n="relaxed">Relaxed</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 6: QUIZ ────────────────────────────────── -->
+  <div class="screen" id="screen-quiz">
+    <div class="card" style="padding-top: 1.75rem;">
+      <div class="corner-deco tl"></div>
+      <div class="corner-deco br"></div>
+
+      <!-- Meta row: counter + progress + timer -->
+      <div class="quiz-meta">
+        <div class="q-counter">
+          <span id="q-current">1</span>/<span id="q-total">10</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+        <div class="timer-ring-wrap" id="timer-ring-wrap">
+          <svg viewBox="0 0 52 52">
+            <circle class="timer-track" cx="26" cy="26" r="22"/>
+            <circle class="timer-arc"   cx="26" cy="26" r="22" id="timer-arc"
+              stroke-dasharray="138.2"
+              stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-num" id="timer-num">30</div>
+        </div>
+      </div>
+
+      <!-- Question -->
+      <div class="question-box" id="question-box">
+        <div class="q-number" id="q-label">QUESTION 01</div>
+        <div class="question-text" id="question-text">Loading...</div>
+      </div>
+
+      <!-- Answers -->
+      <div class="answers-grid" id="answers-grid"></div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 7: RESULT ──────────────────────────────── -->
+  <div class="screen" id="screen-result">
+    <div class="card">
+      <div class="corner-deco tl"></div>
+      <div class="corner-deco br"></div>
+      <span class="label-tag" data-i18n="result_tag">Test Complete</span>
+      <div class="section-title" data-i18n="result_title">Results</div>
+      <hr class="divider">
+
+      <div class="score-display">
+        <div class="score-pct" id="result-pct">0%</div>
+        <div class="score-label" data-i18n="score_label">ACCURACY SCORE</div>
+      </div>
+
+      <div id="verdict-box" class="verdict"></div>
+
+      <div class="score-stats">
+        <div class="stat-box">
+          <div class="stat-val" id="stat-correct">0</div>
+          <div class="stat-lbl" data-i18n="stat_correct">Correct</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="stat-wrong">0</div>
+          <div class="stat-lbl" data-i18n="stat_wrong">Wrong</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="stat-total">0</div>
+          <div class="stat-lbl" data-i18n="stat_total">Total</div>
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn btn-primary" onclick="restartTest()" data-i18n="retry_btn">Retry</button>
+        <button class="btn btn-ghost"   onclick="goHome()"    data-i18n="home_btn">Home</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ============================================================
+   I18N — TRANSLATIONS
+   ============================================================ */
+const T = {
+  en: {
+    welcome_tag:  'System Initialized',
+    welcome_title:'LOGIC TEST',
+    welcome_sub:  'Measure your reasoning. Challenge your mind.',
+    start_btn:    'START',
+    last_score:   'Last Score',
+    lang_title:   'Select Language',
+    lang_sub:     'Choose your preferred language',
+    diff_title:   'Difficulty',
+    diff_sub:     '30 questions per level, randomized',
+    easy:         'Easy',
+    easy_sub:     'Basic Logic',
+    medium:       'Medium',
+    medium_sub:   'Moderate',
+    hard:         'Hard',
+    hard_sub:     'Advanced',
+    len_title:    'Test Length',
+    len_sub:      'How many questions?',
+    questions:    'Questions',
+    timer_title:  'Time Per Question',
+    timer_sub:    'Auto-advance when time expires',
+    fast:         'Fast',
+    balanced:     'Balanced',
+    relaxed:      'Relaxed',
+    result_tag:   'Test Complete',
+    result_title: 'Results',
+    score_label:  'ACCURACY SCORE',
+    stat_correct: 'Correct',
+    stat_wrong:   'Wrong',
+    stat_total:   'Total',
+    retry_btn:    'Retry',
+    home_btn:     'Home',
+    verdict_exc:  'Exceptional! Logic mastered.',
+    verdict_good: 'Strong performance. Well done.',
+    verdict_avg:  'Average. Room for improvement.',
+    verdict_poor: 'Keep practicing. You\'ll get there.',
+    q_label:      'QUESTION',
+  },
+  ru: {
+    welcome_tag:  'Система готова',
+    welcome_title:'ЛОГИЧЕСКИЙ ТЕСТ',
+    welcome_sub:  'Проверь свои способности. Прими вызов.',
+    start_btn:    'НАЧАТЬ',
+    last_score:   'Прошлый результат',
+    lang_title:   'Выбор языка',
+    lang_sub:     'Выберите предпочитаемый язык',
+    diff_title:   'Сложность',
+    diff_sub:     '30 вопросов на каждом уровне, случайный порядок',
+    easy:         'Лёгкий',
+    easy_sub:     'Простая логика',
+    medium:       'Средний',
+    medium_sub:   'Умеренный',
+    hard:         'Сложный',
+    hard_sub:     'Продвинутый',
+    len_title:    'Длина теста',
+    len_sub:      'Сколько вопросов?',
+    questions:    'Вопросов',
+    timer_title:  'Время на вопрос',
+    timer_sub:    'Автопереход при истечении времени',
+    fast:         'Быстро',
+    balanced:     'Баланс',
+    relaxed:      'Медленно',
+    result_tag:   'Тест завершён',
+    result_title: 'Результаты',
+    score_label:  'ТОЧНОСТЬ',
+    stat_correct: 'Правильно',
+    stat_wrong:   'Неверно',
+    stat_total:   'Всего',
+    retry_btn:    'Повторить',
+    home_btn:     'Главная',
+    verdict_exc:  'Исключительно! Логика освоена.',
+    verdict_good: 'Хороший результат. Молодец.',
+    verdict_avg:  'Средне. Есть куда расти.',
+    verdict_poor: 'Практикуйся. Всё получится.',
+    q_label:      'ВОПРОС',
+  },
+  uz: {
+    welcome_tag:  'Tizim tayyor',
+    welcome_title:'MANTIQ TESTI',
+    welcome_sub:  'Fikrlashingizni o\'lchang. O\'zingizni sinab ko\'ring.',
+    start_btn:    'BOSHLASH',
+    last_score:   'Oxirgi natija',
+    lang_title:   'Tilni tanlang',
+    lang_sub:     'Kerakli tilni tanlang',
+    diff_title:   'Qiyinchilik',
+    diff_sub:     'Har darajada 30 ta savol, tasodifiy tartib',
+    easy:         'Oson',
+    easy_sub:     'Boshlang\'ich',
+    medium:       'O\'rtacha',
+    medium_sub:   'Maqbul',
+    hard:         'Qiyin',
+    hard_sub:     'Ilg\'or',
+    len_title:    'Test uzunligi',
+    len_sub:      'Nechta savol?',
+    questions:    'Savol',
+    timer_title:  'Savol uchun vaqt',
+    timer_sub:    'Vaqt tugasa avtomatik o\'tish',
+    fast:         'Tez',
+    balanced:     'Muvozanat',
+    relaxed:      'Sekin',
+    result_tag:   'Test tugadi',
+    result_title: 'Natijalar',
+    score_label:  'ANIQLIK',
+    stat_correct: 'To\'g\'ri',
+    stat_wrong:   'Noto\'g\'ri',
+    stat_total:   'Jami',
+    retry_btn:    'Qayta',
+    home_btn:     'Bosh sahifa',
+    verdict_exc:  'A\'lo! Mantiq o\'zlashtirildi.',
+    verdict_good: 'Yaxshi natija. Barakalla.',
+    verdict_avg:  'O\'rtacha. Rivojlanish kerak.',
+    verdict_poor: 'Mashq qiling. Muvaffaqiyat kelar.',
+    q_label:      'SAVOL',
+  }
+};
+
+/* ============================================================
+   QUESTION BANK
+   ============================================================ */
+const QUESTIONS = {
+  easy: [
+    { q: 'What comes next: 2, 4, 6, 8, ?', a: ['10','12','9','11'], c: 0 },
+    { q: 'Which number is largest: 17, 71, 7, 170?', a: ['17','71','7','170'], c: 3 },
+    { q: 'A cat has 4 legs. 3 cats have how many legs?', a: ['8','10','12','16'], c: 2 },
+    { q: 'What comes next: A, C, E, G, ?', a: ['H','I','J','K'], c: 1 },
+    { q: 'If today is Monday, what day is 3 days later?', a: ['Wednesday','Thursday','Friday','Tuesday'], c: 1 },
+    { q: 'Which shape has 3 sides?', a: ['Square','Circle','Triangle','Rectangle'], c: 2 },
+    { q: '5 + 5 × 0 = ?', a: ['0','5','10','55'], c: 1 },
+    { q: 'What is the opposite of "hot"?', a: ['Warm','Boiling','Cold','Dry'], c: 2 },
+    { q: 'All apples are fruits. A mango is a fruit. Is a mango an apple?', a: ['Yes','No','Maybe','Cannot tell'], c: 1 },
+    { q: 'Which comes last alphabetically: Dog, Ant, Zebra, Cat?', a: ['Dog','Ant','Zebra','Cat'], c: 2 },
+    { q: 'If a shirt costs $10, how many can you buy with $30?', a: ['2','3','4','5'], c: 1 },
+    { q: 'What comes next: 1, 3, 5, 7, ?', a: ['8','9','10','11'], c: 1 },
+    { q: 'Mary is taller than Tom. Tom is taller than Sue. Who is shortest?', a: ['Mary','Tom','Sue','Cannot tell'], c: 2 },
+    { q: 'Which is heavier: 1kg of iron or 1kg of feathers?', a: ['Iron','Feathers','They are equal','Cannot tell'], c: 2 },
+    { q: '3 × 4 ÷ 2 = ?', a: ['6','12','4','8'], c: 0 },
+    { q: 'Some birds can fly. Penguins are birds. Can penguins fly?', a: ['Yes','No','Not necessarily','Always'], c: 2 },
+    { q: 'What fraction of 20 is 5?', a: ['1/2','1/4','1/5','1/3'], c: 1 },
+    { q: 'RICE : GRAIN :: WATER : ?', a: ['Wet','Liquid','Glass','River'], c: 1 },
+    { q: 'Complete the pattern: O X O O X O O O X ?', a: ['O','X','O O','X O'], c: 0 },
+    { q: 'A week has 7 days. How many days in 4 weeks?', a: ['21','28','30','32'], c: 1 },
+    { q: 'Which number is odd: 14, 22, 17, 36?', a: ['14','22','17','36'], c: 2 },
+    { q: 'If RED = 27, then BLUE = ?', a: ['40','36','42','38'], c: 2 },
+    { q: 'What comes next: 100, 50, 25, 12.5, ?', a: ['6','6.25','7','5'], c: 1 },
+    { q: 'Book is to Library as Painting is to ?', a: ['Frame','Museum','Artist','Canvas'], c: 1 },
+    { q: 'If 6 workers complete a job in 4 days, how many days for 12 workers?', a: ['2','3','4','8'], c: 0 },
+    { q: 'Which letter is 5th from the end of the alphabet?', a: ['U','V','W','X'], c: 1 },
+    { q: 'A square has area 16. What is its side length?', a: ['2','3','4','8'], c: 2 },
+    { q: 'All cats meow. Felix is a cat. Does Felix meow?', a: ['Yes','No','Maybe','Cannot say'], c: 0 },
+    { q: 'What is 15% of 200?', a: ['20','25','30','35'], c: 2 },
+    { q: 'SLOW : FAST :: DARK : ?', a: ['Night','Light','Shadow','Dim'], c: 1 },
+  ],
+  medium: [
+    { q: 'If all Bloops are Razzles, and all Razzles are Lazzles, are all Bloops Lazzles?', a: ['Yes','No','Uncertain','Impossible'], c: 0 },
+    { q: 'What is the next number: 1, 4, 9, 16, 25, ?', a: ['30','36','35','49'], c: 1 },
+    { q: 'A is B\'s sister. B is C\'s brother. What is A to C?', a: ['Sister','Brother','Aunt','Cousin'], c: 0 },
+    { q: 'Find the missing number: 3, 6, 11, 18, 27, ?', a: ['35','36','38','40'], c: 2 },
+    { q: 'If PENCIL → 67, PAPER → ?', a: ['52','54','56','48'], c: 0 },
+    { q: 'Two trains leave cities 300 km apart at 60 km/h each. When do they meet?', a: ['2 hrs','2.5 hrs','3 hrs','1.5 hrs'], c: 1 },
+    { q: 'Which does not belong: 11, 22, 33, 44, 46?', a: ['11','22','46','33'], c: 2 },
+    { q: 'If NORTH is coded as SOUTH, what is EAST coded as?', a: ['NORTH','WEST','EAST','SOUTH'], c: 1 },
+    { q: 'In a group of 50: 35 like tea, 25 like coffee, 10 like both. How many like neither?', a: ['0','5','10','15'], c: 0 },
+    { q: 'Series: 2, 3, 5, 8, 13, 21, ? (Fibonacci)', a: ['32','33','34','35'], c: 2 },
+    { q: 'John is 2 years older than Mary. In 5 years, John will be twice Mary\'s current age. How old is Mary now?', a: ['3','5','7','9'], c: 0 },
+    { q: 'What is the angle between clock hands at 3:15?', a: ['0°','7.5°','15°','22.5°'], c: 1 },
+    { q: 'Complete: ACE, BDF, CEG, ?', a: ['DFH','EGI','CFI','DGH'], c: 0 },
+    { q: 'If 5 machines make 5 items in 5 minutes, how long for 100 machines to make 100 items?', a: ['100 min','5 min','10 min','50 min'], c: 1 },
+    { q: 'Which word logically completes: Surgeon : Scalpel :: Painter : ?', a: ['Canvas','Gallery','Brush','Color'], c: 2 },
+    { q: 'A bat and ball cost $1.10 total. Bat costs $1 more than ball. Cost of ball?', a: ['$0.10','$0.05','$0.15','$0.01'], c: 1 },
+    { q: 'How many triangles are in a regular hexagon divided into 6 triangles?', a: ['6','8','10','12'], c: 2 },
+    { q: 'Find odd one out: 144, 169, 196, 225, 250', a: ['144','169','250','225'], c: 2 },
+    { q: 'Rotate: ABCDE → CDEAB. What is LOGIC → ?', a: ['ICLOG','GICLO','ICLOGI','LOGIC'], c: 1 },
+    { q: 'If 30% of x = 60, what is 50% of x?', a: ['80','100','120','90'], c: 1 },
+    { q: 'Three friends share $240 in ratio 1:2:3. Largest share?', a: ['$80','$120','$100','$60'], c: 1 },
+    { q: 'Which number replaces ?: 4 9 16 25 36 ?', a: ['42','47','49','50'], c: 2 },
+    { q: 'A snail climbs 3m/day but slides 2m/night. How many days to climb 10m?', a: ['8','9','10','7'], c: 0 },
+    { q: 'ARMY → YRMA :: LOGIC → ?', a: ['CIGOL','LOGIC','GOLCI','LCOGI'], c: 0 },
+    { q: 'P is Q\'s brother. Q is R\'s mother. R is S\'s father. What is P to S?', a: ['Uncle','Grandfather','Grand-uncle','Brother'], c: 2 },
+    { q: 'Sequence: 5, 10, 20, 40, 80, ?', a: ['100','120','160','200'], c: 2 },
+    { q: 'If A > B and C < B, which could be true?', a: ['C > A','A > C','C = A','C > B'], c: 1 },
+    { q: 'Find: 1² + 2² + 3² + 4² = ?', a: ['20','25','28','30'], c: 3 },
+    { q: 'A boat goes 15km downstream in 1hr, 9km upstream in 1hr. Speed of current?', a: ['2 km/h','3 km/h','4 km/h','6 km/h'], c: 1 },
+    { q: 'How many prime numbers between 1 and 20?', a: ['6','7','8','9'], c: 2 },
+  ],
+  hard: [
+    { q: 'If x³ = 27 and y³ = 64, what is (x+y)²?', a: ['25','49','36','64'], c: 1 },
+    { q: 'All P are Q. No Q is R. Some S are P. Conclusion: Some S are not R?', a: ['True','False','Uncertain','Irrelevant'], c: 0 },
+    { q: 'Find the pattern: 6, 24, 60, 120, 210, ?', a: ['300','320','336','350'], c: 2 },
+    { q: 'In a 3×3 grid, rows sum to 15. Center value?', a: ['3','4','5','6'], c: 2 },
+    { q: 'Monty Hall: You pick door 1. Host opens door 3 (no prize). Switch?', a: ['Stay','Switch — better odds','Both equal','Switch — same odds'], c: 1 },
+    { q: 'If log₂(x) = 8, what is x?', a: ['16','64','128','256'], c: 3 },
+    { q: 'Five people rank 1–5. A is 2 ranks above B. C is ranked 1st. D is between A and B. Who is 4th?', a: ['A','B','D','E'], c: 1 },
+    { q: 'Sequence: 2, 5, 11, 23, 47, ?', a: ['89','94','95','99'], c: 2 },
+    { q: 'If 2ⁿ = 1024, what is n?', a: ['8','9','10','11'], c: 2 },
+    { q: 'All mammals breathe. No fish are mammals. Some sea creatures are fish. What follows?', a: ['Some sea creatures don\'t breathe','No sea creature breathes','Some sea creatures breathe','None of the above'], c: 2 },
+    { q: 'A clock loses 2 min every hour. After 12 hours, how many minutes slow?', a: ['12','18','24','20'], c: 2 },
+    { q: '15 people shake hands once. Total handshakes?', a: ['90','100','105','110'], c: 2 },
+    { q: 'Solve: x² - 5x + 6 = 0. Roots?', a: ['2,3','1,6','-2,-3','3,4'], c: 0 },
+    { q: 'How many ways to arrange letters in "LOGIC"?', a: ['60','100','120','24'], c: 2 },
+    { q: 'If f(x) = 3x + 2, what is f(f(2))?', a: ['20','24','26','30'], c: 2 },
+    { q: 'A rectangle\'s length is twice its width. Perimeter = 60. Area?', a: ['150','180','200','220'], c: 2 },
+    { q: 'John lies on Mon/Tue/Wed, tells truth otherwise. "Yesterday I lied." Which day?', a: ['Wednesday','Thursday','Monday','Tuesday'], c: 1 },
+    { q: 'Series: 1, 11, 21, 1211, 111221, ?', a: ['312211','1112221','312212','221111'], c: 0 },
+    { q: '27 balls, one heavier. Min weighings on balance scale to find it?', a: ['2','3','4','5'], c: 1 },
+    { q: '6 workers build a wall in 10 days. 4 workers build it in how many days?', a: ['12','13','15','16'], c: 2 },
+    { q: 'What is 15! / 13! ?', a: ['180','182','210','240'], c: 2 },
+    { q: 'Sequence: Z, X, V, T, R, ?', a: ['P','Q','S','O'], c: 0 },
+    { q: 'A circular track 400m. Two runners at 10m/s and 6m/s opposite dirs. When do they first meet?', a: ['20s','25s','30s','40s'], c: 1 },
+    { q: 'n² + n is always divisible by?', a: ['3','4','2','5'], c: 2 },
+    { q: 'If P(A) = 0.4 and P(B) = 0.3 and A,B independent, P(A∩B) = ?', a: ['0.07','0.12','0.10','0.16'], c: 1 },
+    { q: 'Cube surface area = 96. Volume?', a: ['32','36','64','48'], c: 2 },
+    { q: 'Missing: 1, 8, 27, 64, 125, ?', a: ['196','206','216','236'], c: 2 },
+    { q: 'Knight on chess a1. Minimum moves to reach h8?', a: ['4','5','6','7'], c: 2 },
+    { q: 'Five houses, five colors. Brit in red house. Swede has dog. Green house is left of white. Who owns the fish? (simplified Einstein)', a: ['German','Norwegian','Brit','Swede'], c: 0 },
+    { q: 'Sequence of primes: 2, 3, 5, 7, 11, 13, ? (7th prime)', a: ['15','17','19','21'], c: 1 },
+  ]
+};
+
+/* ============================================================
+   APP STATE
+   ============================================================ */
+let state = {
+  lang:       'en',
+  difficulty: 'easy',
+  length:     10,
+  timerSec:   30,
+  questions:  [],
+  current:    0,
+  score:      0,
+  timer:      null,
+  timeLeft:   30,
+  answered:   false
+};
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function initTheme() {
+  const saved = localStorage.getItem('lt_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.getElementById('theme-btn').textContent = saved === 'light' ? '☀' : '☽';
+}
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('lt_theme', next);
+  document.getElementById('theme-btn').textContent = next === 'light' ? '☀' : '☽';
+}
+
+/* ============================================================
+   I18N
+   ============================================================ */
+function applyLang(lang) {
+  state.lang = lang;
+  const t = T[lang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.textContent = t[key];
+  });
+}
+
+/* ============================================================
+   SCREEN NAVIGATION
+   ============================================================ */
+function goTo(screenId) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const target = document.getElementById(screenId);
+  target.style.display = 'block';
+  // Force reflow for animation
+  void target.offsetWidth;
+  target.classList.add('active');
+}
+
+/* ============================================================
+   SETUP STEPS
+   ============================================================ */
+function setLang(lang) {
+  applyLang(lang);
+  goTo('screen-difficulty');
+}
+
+function setDifficulty(diff) {
+  state.difficulty = diff;
+  goTo('screen-length');
+}
+
+function setLength(n) {
+  state.length = n;
+  goTo('screen-timer');
+}
+
+function setTimer(sec) {
+  state.timerSec = sec;
+  startQuiz();
+}
+
+/* ============================================================
+   QUIZ START
+   ============================================================ */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const pool = shuffle(QUESTIONS[state.difficulty]).slice(0, state.length);
+  // Shuffle answer choices for each question
+  state.questions = pool.map(q => {
+    const indexed = q.a.map((text, i) => ({ text, isCorrect: i === q.c }));
+    const shuffled = shuffle(indexed);
+    return {
+      q: q.q,
+      answers: shuffled,
+      correct: shuffled.findIndex(a => a.isCorrect)
+    };
+  });
+  state.current = 0;
+  state.score   = 0;
+  state.answered = false;
+
+  document.getElementById('q-total').textContent = state.length;
+  goTo('screen-quiz');
+  renderQuestion();
+}
+
+/* ============================================================
+   RENDER QUESTION
+   ============================================================ */
+function renderQuestion() {
+  const t = T[state.lang];
+  const q = state.questions[state.current];
+  const idx = state.current;
+
+  // Labels
+  document.getElementById('q-current').textContent = idx + 1;
+  document.getElementById('q-label').textContent =
+    `${t.q_label} ${String(idx + 1).padStart(2, '0')}`;
+  document.getElementById('question-text').textContent = q.q;
+
+  // Progress
+  const pct = Math.round((idx / state.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  // Answers
+  const grid = document.getElementById('answers-grid');
+  grid.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  q.answers.forEach((ans, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'ans-btn';
+    btn.innerHTML = `<span class="ans-letter">${letters[i]}</span><span>${ans.text}</span>`;
+    btn.onclick = () => handleAnswer(i, btn, q.correct);
+    grid.appendChild(btn);
+  });
+
+  state.answered = false;
+  startTimer();
+}
+
+/* ============================================================
+   ANSWER HANDLING
+   ============================================================ */
+function handleAnswer(chosen, btn, correct) {
+  if (state.answered) return;
+  state.answered = true;
+  clearInterval(state.timer);
+
+  const buttons = document.querySelectorAll('.ans-btn');
+  buttons.forEach(b => b.disabled = true);
+
+  if (chosen === correct) {
+    state.score++;
+    btn.classList.add('correct');
+    flashFeedback(true);
+    playTone(true);
+  } else {
+    btn.classList.add('wrong');
+    buttons[correct].classList.add('correct');
+    flashFeedback(false);
+    playTone(false);
+  }
+
+  setTimeout(nextQuestion, 1100);
+}
+
+/* ============================================================
+   FEEDBACK
+   ============================================================ */
+function flashFeedback(correct) {
+  const el = document.getElementById('feedback-flash');
+  el.className = `feedback-flash ${correct ? 'correct-flash' : 'wrong-flash'} show`;
+  setTimeout(() => el.classList.remove('show'), 300);
+}
+
+function playTone(correct) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = correct ? 880 : 220;
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.25);
+  } catch(e) {}
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+function startTimer() {
+  const wrap = document.getElementById('timer-ring-wrap');
+  wrap.className = 'timer-ring-wrap';
+
+  state.timeLeft = state.timerSec;
+  const arc = document.getElementById('timer-arc');
+  const num = document.getElementById('timer-num');
+  const circumference = 138.2;
+
+  const update = () => {
+    const ratio = state.timeLeft / state.timerSec;
+    arc.style.strokeDashoffset = circumference * (1 - ratio);
+    num.textContent = state.timeLeft;
+
+    if (state.timeLeft <= 5)        wrap.className = 'timer-ring-wrap timer-danger';
+    else if (state.timeLeft <= 10)  wrap.className = 'timer-ring-wrap timer-warn';
+  };
+
+  update();
+  clearInterval(state.timer);
+  state.timer = setInterval(() => {
+    state.timeLeft--;
+    update();
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timer);
+      if (!state.answered) timeUp();
+    }
+  }, 1000);
+}
+
+function timeUp() {
+  state.answered = true;
+  const q = state.questions[state.current];
+  const buttons = document.querySelectorAll('.ans-btn');
+  buttons.forEach(b => b.disabled = true);
+  buttons[q.correct].classList.add('correct');
+  flashFeedback(false);
+  playTone(false);
+  setTimeout(nextQuestion, 1000);
+}
+
+/* ============================================================
+   NEXT QUESTION / RESULTS
+   ============================================================ */
+function nextQuestion() {
+  state.current++;
+  if (state.current >= state.length) {
+    showResults();
+  } else {
+    // Re-render with animation
+    const qbox = document.getElementById('question-box');
+    const agrid = document.getElementById('answers-grid');
+    qbox.style.animation  = 'none'; void qbox.offsetWidth;  qbox.style.animation  = '';
+    agrid.style.animation = 'none'; void agrid.offsetWidth; agrid.style.animation = '';
+    renderQuestion();
+  }
+}
+
+/* ============================================================
+   RESULTS
+   ============================================================ */
+function showResults() {
+  const pct = Math.round((state.score / state.length) * 100);
+  const wrong = state.length - state.score;
+  const t = T[state.lang];
+
+  document.getElementById('result-pct').textContent    = pct + '%';
+  document.getElementById('stat-correct').textContent  = state.score;
+  document.getElementById('stat-wrong').textContent    = wrong;
+  document.getElementById('stat-total').textContent    = state.length;
+
+  // Verdict
+  const vbox = document.getElementById('verdict-box');
+  if (pct >= 90)      { vbox.className = 'verdict excellent'; vbox.textContent = t.verdict_exc; }
+  else if (pct >= 70) { vbox.className = 'verdict good';      vbox.textContent = t.verdict_good; }
+  else if (pct >= 50) { vbox.className = 'verdict average';   vbox.textContent = t.verdict_avg; }
+  else                { vbox.className = 'verdict poor';      vbox.textContent = t.verdict_poor; }
+
+  // Progress to 100%
+  document.getElementById('progress-fill').style.width = '100%';
+
+  // Save to localStorage
+  localStorage.setItem('lt_last_score', pct + '%');
+  localStorage.setItem('lt_last_correct', state.score + '/' + state.length);
+
+  goTo('screen-result');
+}
+
+/* ============================================================
+   NAVIGATION ACTIONS
+   ============================================================ */
+function restartTest() {
+  clearInterval(state.timer);
+  startQuiz();
+}
+
+function goHome() {
+  clearInterval(state.timer);
+  loadLastScore();
+  goTo('screen-welcome');
+}
+
+function loadLastScore() {
+  const last = localStorage.getItem('lt_last_score');
+  const wrap = document.getElementById('last-score-wrap');
+  if (last) {
+    wrap.style.display = 'flex';
+    wrap.style.justifyContent = 'center';
+    document.getElementById('last-score-val').textContent = last;
+  }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(function init() {
+  initTheme();
+  applyLang('en');
+  loadLastScore();
+  // Hide all screens except welcome
+  document.querySelectorAll('.screen').forEach(s => {
+    if (!s.classList.contains('active')) s.style.display = 'none';
+  });
+})();
+</script>
+</body>
+</html>
